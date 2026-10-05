@@ -1,5 +1,10 @@
 # AUM-IC Sanitize (Motor Forense Anti-Entropía Zero-Trust)
 
+🌐 Navegación: 🇺🇸 [Read in English](README.md) | 📜 [Manifiesto (ES)](MANIFEST.es.md) | 📖 [Bitácora](BITACORA.md)
+
+![Standard AUM-IC 7](https://img.shields.io/badge/Standard-AUM--IC_7-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5) ![License AGPL/Comercial](https://img.shields.io/badge/License-AGPL%2FComercial-orange) ![built by IngCrea](https://img.shields.io/badge/built_by-IngCrea-yellow)
+
+
 **AUM-IC Sanitize** es una herramienta CLI de grado empresarial y un interceptor *Self-Healing* diseñado por **Ingeniería Creativa**. Su propósito absoluto es operar como el sistema inmunológico de repositorios masivos, erradicando entropía estructural, Mojibake y ataques Trojan Source.
 
 ## La Amenaza Invisible
