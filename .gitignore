@@ -1,0 +1,11 @@
+node_modules/
+dist/
+aumic-history.json
+ROADMAP.md
+ROADMAP.es.md
+.env
+.vscode/
+*.log
+*.exe
+*.bin
+.gemini-backup/
