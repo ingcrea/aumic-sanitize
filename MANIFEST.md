@@ -1,44 +1,27 @@
-# MANIFEST (Decisiones de Arquitectura y Evolución Forense)
+# AUM-IC SANITIZE: ADR (Architecture Decision Record)
 
 🌐 Navigation: 🇲🇽 [Leer en Español](MANIFEST.es.md) | 🏠 [Back to Home](README.md)
 
 ![Standard AUM-IC 7:2026](https://img.shields.io/badge/Standard-AUM--IC_7%3A2026-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5)
 
+Architecture decisions and structural design log of the sanitization engine. Zero speculation. Documented logic to guarantee strict maintenance and evolution of the CLI core.
 
-Este manifiesto documenta las decisiones de diseño arquitectónico y la evolución estructural de **AUM-IC Sanitize**.
+## 1. Forensic Persistence and Auditing
+*   **Context:** A destructive script without a detailed logging system is an unacceptable risk in client monorepos.
+*   **Decision:** State snapshot engine injection (`aumic-history.json`). The system maps structural entropy before mutating any bytes, allowing exact automated rollbacks.
 
-## 1. Inteligencia Forense y Transparencia (aumic-history.json)
-*   **Problema:** Operar un escáner masivo sin un log centralizado es una caja negra inaceptable.
-*   **Resolución:** Se inyectó un motor de estado que capta la entropía de los archivos antes de su alteración, permitiendo inspección y reversión algorítmica perfecta.
+## 2. Scanning Efficiency (Delta)
+*   **Context:** Parsing an entire repository of thousands of files on every commit halts development pipelines.
+*   **Decision:** Architecture based on *Targeting* and differential mode (`--delta`) anchored to the local Git index. The engine only reads and processes modified deltas.
 
-## 2. Targeting y Restauración Quirúrgica (Rollback)
-*   **Resolución:** La arquitectura paramétrica (`[target]`) aísla la carga de escaneo o de rollback (`restore`) a la carpeta o archivo exacto sin afectar el entorno periférico.
+## 3. Base Collision Prevention (Shielding)
+*   **Context:** When scanning its own codebase, the CLI detected and deleted its own algorithmic signatures for malware and Mojibake detection (Self-Mutilation).
+*   **Decision:** Refactored all internal search vectors using raw hexadecimals and isolated HTML entities. The engine bypasses its own source code by physical default.
 
-## 3. La Paradoja de Automutilación (Inmunidad Matemática)
-*   **Resolución:** Se purgaron las cadenas estáticas usando Blindaje Unicode (Hexadecimales) en el código y Entidades HTML puras en la documentación, permitiendo al CLI auditarse a sí mismo.
+## 4. AST (Abstract Syntax Tree) vs Regex
+*   **Context:** Using regular expressions to hunt `console.log` calls destroyed legitimate text strings and generated critical false positives.
+*   **Decision:** Replaced Regex with pure lexical analysis. Implemented `@babel/parser` and `magic-string`. The engine maps code into an AST tree and executes surgical mutilation exclusively on verified `CallExpression` nodes.
 
-## 4. Anomalías Tipográficas y Vulnerabilidades (Capa 7)
-*   **Resolución:** Destrucción incondicional de control BiDi (Trojan Source) y BOM fantasma (`&iuml;&raquo;&iquest;`).
-
-## 5. Erradicación Basada en AST (Precisión Matemática)
-*   **Problema:** El uso de Regex para eliminar `console.log` provocaba falsos positivos si la sentencia estaba dentro de un string o comentario.
-*   **Resolución:** Implementación de analizador léxico (`@babel/parser` + `magic-string`). El código se mapea a un AST y los nodos `CallExpression` se mutilan usando sus coordenadas exactas, logrando precisión quirúrgica.
-
-## 6. Concurrencia Física (Worker Threads)
-*   **Problema:** Node.js es single-thread, provocando estrangulamiento de I/O en repositorios de miles de archivos.
-*   **Resolución:** Integración de un Worker Pool nativo (`piscina`) para balanceo de carga paralelo, dividiendo los Buffers matemáticos entre los núcleos físicos del CPU.
-
-## 7. Escaneo Diferencial (Delta Scan)
-*   **Resolución:** Acoplamiento directo con el CLI de `git` (`--delta`) para ignorar archivos estáticos y auditar exclusivamente nodos modificados o untracked, optimizando pipelines de CI/CD.
-
-## 8. Pre-AST Heuristic Optimization
-*   **Problem:** Initializing Babel AST for every JS/TS file caused unacceptable CPU overhead, even on clean files.
-*   **Resolution:** Injection of a fast string filter (`content.includes('console.')`). The engine only invokes the mathematical parser if there is a high probability of infection.
-
-## 9. IPC Friction Reduction (Chunking)
-*   **Problem:** Sending 3,000 files one by one to the Worker Pool generated 3,000 messages crossing the Node.js boundary (IPC Friction).
-*   **Resolution:** Batching Algorithm. The engine now partitions file arrays mathematically based on the number of physical cores (`concurrency`) and sends a single massive message per thread, reducing IPC friction by 99%.
-
-
----
-*Created by Ingeniería Creativa under the AUM-IC 7:2026 Standard*
+## 5. Concurrent Scalability (Worker Threads)
+*   **Context:** Node.js collapses from I/O thread starvation when parsing massive files synchronously or asynchronously on a single thread.
+*   **Decision:** Native Worker Pool integration (`piscina`). Heavy computational loads are delegated directly to physical processor cores, reducing scan times to the theoretical minimum.
