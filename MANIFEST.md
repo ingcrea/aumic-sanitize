@@ -2,7 +2,7 @@
 
 🌐 Navigation: 🇲🇽 [Leer en Español](MANIFEST.es.md) | 🏠 [Back to Home](README.md)
 
-![Standard AUM-IC 7](https://img.shields.io/badge/Standard-AUM--IC_7-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5)
+![Standard AUM-IC 7:2026](https://img.shields.io/badge/Standard-AUM--IC_7%3A2026-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5)
 
 
 Este manifiesto documenta las decisiones de diseño arquitectónico y la evolución estructural de **AUM-IC Sanitize**.

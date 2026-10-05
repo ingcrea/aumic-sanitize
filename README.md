@@ -2,7 +2,7 @@
 
 🌐 Navigation: 🇲🇽 [Leer en Español](README.es.md) | 📜 [Manifesto (EN)](MANIFEST.md) | 📖 [Changelog](BITACORA.md)
 
-![Standard AUM-IC 7](https://img.shields.io/badge/Standard-AUM--IC_7-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5) ![License AGPL/Commercial](https://img.shields.io/badge/License-AGPL%2FCommercial-orange) ![built by IngCrea](https://img.shields.io/badge/built_by-IngCrea-yellow)
+![Standard AUM-IC 7:2026](https://img.shields.io/badge/Standard-AUM--IC_7%3A2026-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5) ![License AGPL/Commercial](https://img.shields.io/badge/License-AGPL%2FCommercial-orange) ![built by Ingeniería Creativa](https://img.shields.io/badge/built_by-Ingenier%C3%ADa_Creativa-yellow)
 
 
 **AUM-IC Sanitize** es una herramienta CLI de grado empresarial y un interceptor *Self-Healing* diseñado por **Ingeniería Creativa**. Su propósito absoluto es operar como el sistema inmunológico de repositorios masivos, erradicando entropía estructural, Mojibake y ataques Trojan Source.
