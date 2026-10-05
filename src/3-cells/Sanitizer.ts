@@ -1,4 +1,4 @@
-import fs from 'fs/promises';
+import fsP from 'fs/promises';
 import { execSync } from 'child_process';
 import path from 'path';
 
@@ -9,119 +9,227 @@ import MagicString from 'magic-string';
 import { REPLACEMENTS, EMOJI_PATTERN, reverseEmojiMojibake } from '../1-atoms/constants';
 import type { SanitizeOptions, FileSanitizeResult } from '../1-atoms/types';
 
-export async function processFile(filepath: string, options: SanitizeOptions): Promise<FileSanitizeResult> {
-    try {
-        let content = await fs.readFile(filepath, 'utf8');
-        const originalContent = content;
-        let corruptions = 0;
-        const rules = options.config.rules;
+// ─────────────────────────────────────────────────────────────────────────────
+// Archivos de codigo fuente: se activa el pipeline AST.
+// Resto de extensiones: procesador plano (regex global sin riesgo de romper
+// delimitadores de lenguaje).
+// ─────────────────────────────────────────────────────────────────────────────
+const CODE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.astro', '.mjs', '.cjs']);
 
-        // A. Limpieza de Acentos
-        if (rules.mojibake) {
-            for (const [bad, good] of Object.entries(REPLACEMENTS)) {
-                let count = content.split(bad).length - 1;
-                if (count > 0) {
-                    content = content.replaceAll(bad, good);
+// ─────────────────────────────────────────────────────────────────────────────
+// KERNEL DE REGLAS DE ENTROPIA
+// Recibe un fragmento de texto YA AISLADO (interior de un string/comentario)
+// y aplica las transformaciones sin tocar delimitadores del lenguaje.
+// ─────────────────────────────────────────────────────────────────────────────
+function applyEntropyRules(raw: string, rules: Record<string, boolean>): { fixed: string; count: number } {
+    let fixed = raw;
+    let count = 0;
+
+    if (rules.mojibake) {
+        for (const [bad, good] of Object.entries(REPLACEMENTS)) {
+            const c = fixed.split(bad).length - 1;
+            if (c > 0) { fixed = fixed.replaceAll(bad, good); count += c; }
+        }
+    }
+    if (rules.emojis) {
+        fixed = fixed.replace(EMOJI_PATTERN, (match: string) => {
+            const r = reverseEmojiMojibake(match);
+            if (r !== match) { count++; return r; }
+            return match;
+        });
+    }
+    if (rules.smartQuotes) {
+        // Comillas dobles tipograficas
+        const dq = (fixed.match(/[“”]/g) || []).length;
+        if (dq > 0) { fixed = fixed.replace(/[“”]/g, '"'); count += dq; }
+        // Comillas simples / apostrofes curvos
+        // SEGURO aqui porque operamos sobre el INTERIOR de un nodo ya delimitado.
+        const sq = (fixed.match(/[‘’]/g) || []).length;
+        if (sq > 0) { fixed = fixed.replace(/[‘’]/g, '''); count += sq; }
+    }
+    if (rules.zeroWidth) {
+        const inv = /[​‌‍‪-‮⁦-⁩]/g;
+        const c = (fixed.match(inv) || []).length;
+        if (c > 0) { fixed = fixed.replace(inv, ''); count += c; }
+    }
+    return { fixed, count };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROCESADOR DE CODIGO — AST + MagicString
+// ─────────────────────────────────────────────────────────────────────────────
+async function processCodeFile(
+    filepath: string,
+    content: string,
+    rules: Record<string, boolean>,
+    audit: boolean,
+    gitStage: boolean
+): Promise<FileSanitizeResult> {
+    let corruptions = 0;
+
+    try {
+        const ms = new MagicString(content);
+
+        const ast = parse(content, {
+            sourceType: 'unambiguous',
+            errorRecovery: true,
+            plugins: ['jsx', 'typescript', 'decorators-legacy', 'classProperties'],
+        });
+
+        traverse(ast, {
+            StringLiteral({ node }: any) {
+                // Operamos SOLO sobre el interior: [start+1 .. end-1] (excluye comillas)
+                const inner = content.slice(node.start + 1, node.end - 1);
+                const { fixed, count } = applyEntropyRules(inner, rules);
+                if (count > 0 && fixed !== inner) {
+                    ms.overwrite(node.start + 1, node.end - 1, fixed);
                     corruptions += count;
                 }
+            },
+            TemplateLiteral({ node }: any) {
+                // Cada segmento estatico (quasis) se procesa de forma independiente
+                for (const quasi of (node as any).quasis) {
+                    const raw = quasi.value.raw as string;
+                    const { fixed, count } = applyEntropyRules(raw, rules);
+                    if (count > 0 && fixed !== raw) {
+                        const s = quasi.start + 1;
+                        const e = quasi.end - 1;
+                        if (s < e) { ms.overwrite(s, e, fixed); corruptions += count; }
+                    }
+                }
+            },
+        });
+
+        // Comentarios (disponibles en ast.comments, fuera del traversal estandar)
+        for (const comment of ((ast as any).comments || [])) {
+            const raw: string = comment.value;
+            const { fixed, count } = applyEntropyRules(raw, rules);
+            if (count > 0 && fixed !== raw) {
+                const offset = 2; // Longitud de // o /*
+                const endOffset = comment.type === 'CommentBlock' ? 2 : 0; // Longitud de */
+                const s = comment.start + offset;
+                const e = comment.end - endOffset;
+                if (s < e) { ms.overwrite(s, e, fixed); corruptions += count; }
             }
         }
 
-        // B. Heurística de Emojis
-        if (rules.emojis) {
-            content = content.replace(EMOJI_PATTERN, (match) => {
-                const fixed = reverseEmojiMojibake(match);
-                if (fixed !== match) { corruptions++; return fixed; }
-                return match;
-            });
-        }
-
-        // C. Limpieza de BOM (Estándar y Fantasma)
-        // El BOM estándar al inicio (\uFEFF)
-        if (content.charCodeAt(0) === 0xFEFF) {
-            content = content.slice(1);
-            corruptions++;
-        }
-        // BOM Fantasma () en medio del código (ej. concatenación de archivos)
-        // Se busca por secuencia Hex para evitar automutilación
-        const ghostBomCount = (content.match(/\u00EF\u00BB\u00BF/g) || []).length;
-        if (ghostBomCount > 0) {
-            content = content.replace(/\u00EF\u00BB\u00BF/g, "");
-            corruptions += ghostBomCount;
-        }
-
-        // D. Comillas Tipográficas (Smart Quotes que rompen JSON y Strings)
-        // Usamos \u201C, \u201D, \u2018, \u2019 explícitamente para evitar automutilación
-        if (rules.smartQuotes) {
-            const doubleQ = (content.match(/[\u201C\u201D]/g) || []).length;
-            if (doubleQ > 0) { content = content.replace(/[\u201C\u201D]/g, '"'); corruptions += doubleQ; }
-            const singleQ = (content.match(/[\u2018\u2019]/g) || []).length;
-            if (singleQ > 0) { content = content.replace(/[\u2018\u2019]/g, "'"); corruptions += singleQ; }
-        }
-
-        // E. Exorcismo Zero-Width, NBSP y Trojan Source (BiDi)
-        if (rules.zeroWidth) {
-            // \u200B-\u200D: Zero Width
-            // \u202A-\u202E, \u2066-\u2069: Directional Overrides (ataques Trojan Source)
-            const invisibleRegex = /[\u200B\u200C\u200D\u202A-\u202E\u2066-\u2069]/g;
-            const zWidth = (content.match(invisibleRegex) || []).length;
-            if (zWidth > 0) { 
-                content = content.replace(invisibleRegex, ""); 
-                corruptions += zWidth; 
-            }
-            
-            // NBSP (\u00A0) se reemplaza por espacio normal, no se elimina
-            const nbspCount = (content.match(/\u00A0/g) || []).length;
-            if (nbspCount > 0) {
-                content = content.replace(/\u00A0/g, " ");
-                corruptions += nbspCount;
-            }
-        }
-
-        // F. Normalización CRLF
-        if (rules.crlf) {
-            const crlfCount = (content.match(/\r\n/g) || []).length;
-            if (crlfCount > 0) { content = content.replace(/\r\n/g, "\n"); corruptions += crlfCount; }
-        }
-
-        // G. El Erradicador de Producción (Solo para código)
+        // Erradicador de produccion: opera sobre el resultado final del AST
+        let finalContent = ms.toString();
         if (rules.eradicator) {
-            const ext = path.extname(filepath).toLowerCase();
-            if (['.js', '.ts', '.jsx', '.tsx', '.astro'].includes(ext)) {
-                // Borrar console.log/info/debug vacíos o en línea
-                const consoleCount = (content.match(/^[ \t]*console\.(log|info|debug|warn)\(.*?\);?[ \t]*\r?\n?/gm) || []).length;
-                if (consoleCount > 0) {
-                    content = content.replace(/^[ \t]*console\.(log|info|debug|warn)\(.*?\);?[ \t]*\r?\n?/gm, "");
-                    corruptions += consoleCount;
-                }
-                
-                // Borrar debugger;
-                const debugCount = (content.match(/^[ \t]*debugger;[ \t]*\r?\n?/gm) || []).length;
-                if (debugCount > 0) {
-                    content = content.replace(/^[ \t]*debugger;[ \t]*\r?\n?/gm, "");
-                    corruptions += debugCount;
-                }
+            const consoleRx = /^[ 	]*console.(log|info|debug|warn)(.*?);?[ 	]*?
+?/gm;
+            const debugRx   = /^[ 	]*debugger;[ 	]*?
+?/gm;
+            const todoRx    = /^[ 	]*// ?TODO:.*??
+?/gmi;
 
-                // Borrar TODOs
-                const todoCount = (content.match(/^[ \t]*\/\/ ?TODO:.*?\r?\n?/gmi) || []).length;
-                if (todoCount > 0) {
-                    content = content.replace(/^[ \t]*\/\/ ?TODO:.*?\r?\n?/gmi, "");
-                    corruptions += todoCount;
-                }
-            }
+            const cc = (finalContent.match(consoleRx) || []).length;
+            if (cc > 0) { finalContent = finalContent.replace(consoleRx, ''); corruptions += cc; }
+            const dc = (finalContent.match(debugRx) || []).length;
+            if (dc > 0) { finalContent = finalContent.replace(debugRx, ''); corruptions += dc; }
+            const tc = (finalContent.match(todoRx) || []).length;
+            if (tc > 0) { finalContent = finalContent.replace(todoRx, ''); corruptions += tc; }
         }
 
-        if (content !== originalContent) {
-            if (!options.audit) {
-                await fs.writeFile(filepath, content, 'utf8');
-                if (options.gitStage) {
-                    try { execSync(`git add "${filepath}"`, { cwd: path.dirname(filepath), stdio: 'ignore' }); } catch (e) {}
+        if (corruptions > 0) {
+            if (!audit) {
+                await fsP.writeFile(filepath, finalContent, 'utf8');
+                if (gitStage) {
+                    try { execSync(`git add "${filepath}"`, { cwd: path.dirname(filepath), stdio: 'ignore' }); } catch (_) {}
                 }
             }
-            return { filepath, corruptions, modified: true, originalContent };
+            return { filepath, corruptions, modified: true, originalContent: content };
         }
         return { filepath, corruptions: 0, modified: false };
-    } catch (error) {
+
+    } catch (_parseError) {
+        // Fallback: el archivo no pudo parsearse (JS invalido previo), modo plano sin riesgo.
+        return processPlainFile(filepath, content, rules, audit, gitStage);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROCESADOR PLANO — Regex global.
+// Markdown, JSON, CSS, PHP, TXT, etc. Sin sintaxis de lenguaje que romper.
+// ─────────────────────────────────────────────────────────────────────────────
+async function processPlainFile(
+    filepath: string,
+    content: string,
+    rules: Record<string, boolean>,
+    audit: boolean,
+    gitStage: boolean
+): Promise<FileSanitizeResult> {
+    let modified = content;
+    let corruptions = 0;
+
+    if (rules.mojibake) {
+        for (const [bad, good] of Object.entries(REPLACEMENTS)) {
+            const c = modified.split(bad).length - 1;
+            if (c > 0) { modified = modified.replaceAll(bad, good); corruptions += c; }
+        }
+    }
+    if (rules.emojis) {
+        modified = modified.replace(EMOJI_PATTERN, (match: string) => {
+            const r = reverseEmojiMojibake(match);
+            if (r !== match) { corruptions++; return r; }
+            return match;
+        });
+    }
+
+    // BOM estandar al inicio
+    if (modified.charCodeAt(0) === 0xFEFF) { modified = modified.slice(1); corruptions++; }
+    // BOM fantasma en medio del contenido
+    const ghostBom = (modified.match(/ï»¿/g) || []).length;
+    if (ghostBom > 0) { modified = modified.replace(/ï»¿/g, ''); corruptions += ghostBom; }
+
+    if (rules.smartQuotes) {
+        const dq = (modified.match(/[“”]/g) || []).length;
+        if (dq > 0) { modified = modified.replace(/[“”]/g, '"'); corruptions += dq; }
+        const sq = (modified.match(/[‘’]/g) || []).length;
+        if (sq > 0) { modified = modified.replace(/[‘’]/g, '''); corruptions += sq; }
+    }
+    if (rules.zeroWidth) {
+        const inv = /[​‌‍‪-‮⁦-⁩]/g;
+        const c = (modified.match(inv) || []).length;
+        if (c > 0) { modified = modified.replace(inv, ''); corruptions += c; }
+        const nbsp = (modified.match(/ /g) || []).length;
+        if (nbsp > 0) { modified = modified.replace(/ /g, ' '); corruptions += nbsp; }
+    }
+    if (rules.crlf) {
+        const c = (modified.match(/
+/g) || []).length;
+        if (c > 0) { modified = modified.replace(/
+/g, '
+'); corruptions += c; }
+    }
+
+    if (modified !== content) {
+        if (!audit) {
+            await fsP.writeFile(filepath, modified, 'utf8');
+            if (gitStage) {
+                try { execSync(`git add "${filepath}"`, { cwd: path.dirname(filepath), stdio: 'ignore' }); } catch (_) {}
+            }
+        }
+        return { filepath, corruptions, modified: true, originalContent: content };
+    }
+    return { filepath, corruptions: 0, modified: false };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DISPATCHER PRINCIPAL
+// ─────────────────────────────────────────────────────────────────────────────
+export async function processFile(filepath: string, options: SanitizeOptions): Promise<FileSanitizeResult> {
+    try {
+        const content = await fsP.readFile(filepath, 'utf8');
+        const ext = path.extname(filepath).toLowerCase();
+        const rules = options.config.rules;
+
+        if (CODE_EXTENSIONS.has(ext)) {
+            return processCodeFile(filepath, content, rules, options.audit, options.gitStage ?? false);
+        } else {
+            return processPlainFile(filepath, content, rules, options.audit, options.gitStage ?? false);
+        }
+    } catch (_) {
         return { filepath, corruptions: 0, modified: false };
     }
 }
