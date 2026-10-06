@@ -11,6 +11,9 @@ import type { SanitizeOptions } from '../1-atoms/types';
 import readline from 'readline';
 import { exec } from 'child_process';
 
+const PKG_PATH = path.join(__dirname, '../../package.json');
+const PKG_VERSION = JSON.parse(readFileSync(PKG_PATH, 'utf8')).version;
+
 async function promptOpenLog(logPath: string) {
     if (!process.stdin.isTTY) return;
     return new Promise<void>((resolve) => {
@@ -33,7 +36,7 @@ async function interactiveMenu(program: Command) {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     const ask = (query: string): Promise<string> => new Promise(resolve => rl.question(query, resolve));
 
-    console.log(pc.cyan('\n=== AUM-IC Sanitize - Central Forense ==='));
+    console.log(pc.cyan(`\n=== AUM-IC Sanitize v${PKG_VERSION} - Central Forense ===`));
     console.log(pc.gray('Creado por Ingeniería Creativa bajo el Estándar AUM-IC 7:2026\n'));
     console.log('1) ' + pc.yellow('Auditoría') + ' (Simulación Dry-Run sin editar archivos)');
     console.log('2) ' + pc.green('Sanear Proyecto') + ' (Escáner y Destrucción de Entropía)');
@@ -71,7 +74,7 @@ async function interactiveMenu(program: Command) {
 
 export async function runCLI() {
     const program = new Command();
-    program.name('aumic-sanitize').description('Motor Forense Anti-Mojibake y Erradicador de Entropía').version('4.3.0');
+    program.name('aumic-sanitize').description('Motor Forense Anti-Mojibake y Erradicador de Entropía').version(PKG_VERSION);
 
     program.command('init')
         .description('Crea el archivo aumic.config.json en el directorio actual')
