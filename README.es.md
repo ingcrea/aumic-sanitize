@@ -86,6 +86,34 @@ El sistema evalúa 4 métricas técnicas por archivo. Si dos o más umbrales coi
 
 ---
 
+
+---
+
+## ⚙️ Gobernanza y Configuración (Configuration as Code)
+
+Para garantizar que todos los desarrolladores y pipelines de CI/CD operen bajo el mismo estándar, la herramienta permite declarar un contrato de infraestructura. Ejecutar `aumic-sanitize init` genera el archivo `aumic.config.json` en la raíz del proyecto:
+
+```json
+{
+  "ignore": [
+    "node_modules",
+    "dist",
+    "build",
+    ".git",
+    "wp-content/uploads"
+  ],
+  "rules": {
+    "mojibake": true,
+    "zeroWidth": true,
+    "crlf": true,
+    "eradicator": true,
+    "smartQuotes": true
+  }
+}
+```
+
+Este archivo actúa como la **única fuente de verdad**. Permite excluir directorios pesados y desactivar módulos invasivos (por ejemplo, apagar `eradicator` si el proyecto requiere preservar logs en consola por diseño).
+
 ## Implementación
 
 ### 1. Panel de Gestión (CLI)

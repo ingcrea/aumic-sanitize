@@ -78,7 +78,7 @@ export async function runCLI() {
     program.name('aumic-sanitize').description('Motor Forense Anti-Mojibake y Erradicador de Entropía').version(PKG_VERSION);
 
     program.command('init')
-        .description('Crea el archivo aumic.config.json en el directorio actual')
+        .description('Genera aumic.config.json para establecer reglas de gobernanza (exclusiones y configuracion de modulos)')
         .action(() => {
             initConfig(process.cwd());
             console.log(pc.green('âœ" aumic.config.json generado exitosamente.'));
