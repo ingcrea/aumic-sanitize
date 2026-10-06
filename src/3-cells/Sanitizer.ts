@@ -6,7 +6,8 @@ import { parse } from '@babel/parser';
 const traverse = require('@babel/traverse').default || require('@babel/traverse');
 import MagicString from 'magic-string';
 
-import { REPLACEMENTS, EMOJI_PATTERN, reverseEmojiMojibake } from '../1-atoms/constants';
+import { EMOJI_PATTERN, reverseEmojiMojibake } from '../1-atoms/constants';
+import { MojibakeEngine } from '../2-molecules/MojibakeEngine';
 import type { SanitizeOptions, FileSanitizeResult } from '../1-atoms/types';
 import { detectProfile } from '../2-molecules/LanguageProfiler';
 import type { LanguageProfile, SmartQuoteMode } from '../2-molecules/LanguageProfiler';
@@ -26,10 +27,8 @@ function applyEntropyRules(
     let count = 0;
 
     if (rules.mojibake && profile.allowMojibake) {
-        for (const [bad, good] of Object.entries(REPLACEMENTS)) {
-            const c = fixed.split(bad).length - 1;
-            if (c > 0) { fixed = fixed.replaceAll(bad, good); count += c; }
-        }
+        const { fixed: f, count: c } = MojibakeEngine.cure(fixed, profile.allowedMojibakeVectors);
+        if (c > 0) { fixed = f; count += c; }
     }
 
     if (rules.emojis) {

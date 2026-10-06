@@ -1,3 +1,4 @@
+import type { MojibakeVector } from '../1-atoms/mojibake-vectors';
 import path from 'path';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,6 +164,7 @@ function buildProfile(cat: LanguageCategory, isMinified: boolean): LanguageProfi
         allowZeroWidth:  true,
         allowCRLF:       true,
         allowNBSP:       true,
+        allowedMojibakeVectors: ['LATIN1', 'CP1252_PUNCTUATION', 'DOUBLE_UTF8'],
     };
 
     switch (cat) {
@@ -183,12 +185,11 @@ function buildProfile(cat: LanguageCategory, isMinified: boolean): LanguageProfi
             };
 
         case 'PHP':
-            // Los strings PHP usan ' y " pero no pueden tocarse con regex global
-            // porque el contexto HTML mezclado rompe la semantica.
             return { ...base,
                 smartQuoteMode:  'string-regex',
-                allowEradicator: false,  // var_dump es decision del dev PHP
-                allowNBSP:       false,  // En PHP el NBSP puede ser intencional en HTML
+                allowEradicator: false,
+                allowNBSP:       false,
+                allowedMojibakeVectors: ['LATIN1', 'CP1252_PUNCTUATION', 'DOUBLE_UTF8', 'HTML_ENTITIES'],
             };
 
         case 'PYTHON':
@@ -253,11 +254,11 @@ function buildProfile(cat: LanguageCategory, isMinified: boolean): LanguageProfi
             };
 
         case 'MARKUP':
-            // HTML/SVG: los atributos usan " — seguro solo en valores de atributos
             return { ...base,
                 smartQuoteMode:  'string-regex',
                 allowEradicator: false,
-                allowCRLF:       false,  // HTML puede usar CRLF intencionalmente
+                allowCRLF:       false,
+                allowedMojibakeVectors: ['LATIN1', 'CP1252_PUNCTUATION', 'DOUBLE_UTF8', 'HTML_ENTITIES'],
             };
 
         case 'STYLE':
