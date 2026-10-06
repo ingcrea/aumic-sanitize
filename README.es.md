@@ -1,6 +1,6 @@
 # AUM-IC Sanitize (Estandarización y Validación de Repositorios)
 
-🌐 Navegación: 🇺🇸 [Read in English](README.md) | 📜 [Manifiesto](MANIFEST.es.md) | 📖 [Bitácora](BITACORA.md)
+🌐 Navegación: 🇺🇸 [Read in English](README.md) | 📜 [Manifiesto](MANIFEST.es.md)
 
 ![Standard AUM-IC 7:2026](https://img.shields.io/badge/Standard-AUM--IC_7%3A2026-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5) ![License AGPL/Comercial](https://img.shields.io/badge/License-AGPL%2FComercial-orange) ![built by Ingeniería Creativa](https://img.shields.io/badge/built_by-Ingenier%C3%ADa_Creativa-yellow) ![0 CVE Vulnerabilities](https://img.shields.io/badge/Vulnerabilities-0_CVE-success)
 
