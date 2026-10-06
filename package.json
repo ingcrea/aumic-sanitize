@@ -1,7 +1,7 @@
 {
   "name": "@ingcrea/aumic-sanitizer",
   "version": "5.4.2",
-  "description": "Motor Forense Anti-Mojibake de Alto Rendimiento",
+  "description": "Motor Forense Anti-Mojibake y Erradicador de Entropía. Estandarización bajo arquitectura Zero-Trust.",
   "main": "dist/index.js",
   "bin": {
     "aumic-sanitizer": "dist/index.js"
@@ -37,5 +37,24 @@
   "overrides": {
     "braces": "^3.0.3",
     "micromatch": "^4.0.8"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ingcrea/aumic-sanitizer.git"
+  },
+  "homepage": "https://github.com/ingcrea/aumic-sanitizer#readme",
+  "bugs": {
+    "url": "https://github.com/ingcrea/aumic-sanitizer/issues"
+  },
+  "keywords": [
+    "mojibake",
+    "utf8",
+    "zero-trust",
+    "ast",
+    "aum-ic",
+    "cybersecurity",
+    "cli",
+    "git-hook",
+    "ci-cd"
+  ]
 }
