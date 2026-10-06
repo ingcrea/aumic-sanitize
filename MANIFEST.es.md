@@ -1,4 +1,4 @@
-# AUM-IC SANITIZE: Registro de Decisiones Arquitectónicas (ADR)
+# AUM-IC SANITIZER: Registro de Decisiones Arquitectónicas (ADR)
 
 🌐 Navegación: 🇺🇸 [Read in English](MANIFEST.md) | 🏠 [Volver al Inicio](README.es.md)
 
@@ -39,3 +39,7 @@ Documento formal para el registro del diseño estructural del CLI. Este manifies
 
 ## 8. Escalamiento de Hilos (Worker Threads)
 - **Decisión:** Adopción de la librería `piscina` para la distribución nativa de tareas computacionales en arquitecturas de múltiples núcleos, reduciendo los cuellos de botella por operaciones de I/O masivas.
+
+## 9. Contrato de Infraestructura (Configuration as Code)
+- **Contexto:** En equipos multidisciplinarios, la ejecución de validaciones con configuraciones locales dispares causa fricciones operativas y falsos positivos en el CI/CD.
+- **Decisión:** Implementación de un modelo de gobernanza basado en `aumic.config.json`. Este archivo actúa como única fuente de verdad (Single Source of Truth), permitiendo la desactivación modular de heurísticas (ej. preservación intencional de logs mediante el apagado del módulo eradicator) y la exclusión de rutas estáticas. Al ser versionado en el repositorio, garantiza total predictibilidad en el despliegue.
