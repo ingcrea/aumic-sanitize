@@ -6,11 +6,22 @@
 
 **AUM-IC Sanitize** is a native CLI and forensic Git Hook validator. Not a linter. A byte-level tracking engine that purges UTF-8 corruption (Mojibake), mixed line endings, Trojan Source injections, and dead debugging traces before they hit production.
 
-The engine classifies each file into one of its **22 language profiles** before processing it, adapting rules to the exact syntax of each technology. A PHP file, a Swift component, and a minified CSS bundle receive radically different treatment.
+---
+
+## 🛡️ Competitive Advantages & Safety (Zero-Trust)
+
+Unlike common Regex scripts that destroy code when processing massive databases, AUM-IC Sanitize was designed with a strict **Zero-Trust** doctrine toward its own replacement engine.
+
+1. **Forensic Rollback (Emergency Callback):** 
+   The system **never** mutates a file's entropy without first generating a snapshot. Every change is recorded in a local manifest called `aumic-history.json`. If sanitization interferes with business logic, running `aumic-sanitize restore` will invoke a forensic callback that reverts the repository to its exact previous state in milliseconds. No data loss, no catastrophes.
+2. **Binary Protection (Short-Circuit I/O):**
+   Compiled files (`.pdf`, `.docx`, `.xlsx`, `.zip`) and media (images, audio, fonts) are protected by a *short-circuit* barrier. The engine identifies and skips them in 0 milliseconds, preventing memory reads. This guarantees zero corruption in binary deliverables and instantaneous scan times in heavy static directories.
+3. **AST Surgery (Abstract Syntax Tree):**
+   In critical ecosystems (JavaScript, TypeScript, React, Astro), repairs are executed by injecting a syntax tree. The engine is incapable of breaking the code structure because mutations occur exclusively inside string nodes.
 
 ---
 
-## L7 Forensic Inference (Mojibake Matrices)
+## 🔬 L7 Forensic Inference (Mojibake Matrices)
 
 Instead of replacing characters blindly, the engine classifies corruption into 4 matrix vectors and executes heuristic scoring to deduce the origin of the damage before mutating bytes:
 
@@ -20,118 +31,49 @@ Instead of replacing characters blindly, the engine classifies corruption into 4
 4. **HTML_ENTITIES**: Erroneous conversion from bytes to entities (e.g., `&Atilde;&plusmn;`).
 
 ### Vector Distribution by Language
-To avoid semantic collisions, vectors are strictly enabled according to the language profile:
 
 | Language Profile | LATIN1 | CP1252 (Punct) | DOUBLE_UTF8 | HTML_ENTITIES |
 |---|:---:|:---:|:---:|:---:|
 | **PHP** (`.php`, `.phtml`) | ✅ | ✅ | ✅ | ✅ |
 | **MARKUP** (`.html`, `.svg`) | ✅ | ✅ | ✅ | ✅ |
 | **AST** (JS, TS, React, Astro) | ✅ | ✅ | ✅ | ❌ |
-| **DATA** (JSON, YAML, TOML) | ✅ | ✅ | ✅ | ❌ |
+| **DATA** (JSON, YAML, CSV) | ✅ | ✅ | ✅ | ❌ |
 | **Desktop / Mobile / Scripts** | ✅ | ✅ | ✅ | ❌ |
 
 ---
 
 ## Universal Language Coverage
 
-### 🌐 Web
-| Language / Framework | Extensions | Pipeline | Notes |
-|---|---|---|---|
-| JavaScript | `.js` `.mjs` `.cjs` | AST (Babel) | Smart quotes only inside strings/comments |
-| TypeScript | `.ts` | AST (Babel + TS) | Same |
-| React / JSX | `.jsx` `.tsx` | AST (Babel + JSX) | Same |
-| Astro | `.astro` | AST (Babel + TS) | Frontmatter and scripts treated as TS |
-| Vue | `.vue` | StringRegex | Script + template blocks |
-| Svelte | `.svelte` | StringRegex | Script + template blocks |
-| PHP | `.php` `.phtml` | StringRegex | Heredocs and isolated strings; eradicator disabled |
-| HTML | `.html` `.htm` `.xhtml` | StringRegex | Attribute values only |
-| CSS | `.css` `.scss` `.sass` `.less` `.styl` | Global | Minified: byte-level only |
-| SVG | `.svg` | StringRegex | Presentation attributes |
-
-### 🖥️ Desktop & Backend
-| Language | Extensions | Pipeline | Notes |
-|---|---|---|---|
-| Python | `.py` `.pyw` `.pyi` | StringRegex | Triple-quotes included |
-| Ruby | `.rb` `.rake` `.erb` | StringRegex | `#{}` interpolation respected |
-| Go | `.go` | Byte-level regex | Smart quotes disabled (rune literals use `'`) |
-| Rust | `.rs` | Byte-level regex | Smart quotes disabled (char literals use `'`) |
-| C# / .NET | `.cs` `.csx` | StringRegex | Verbatim strings `@"..."` included |
-| Java | `.java` `.groovy` | StringRegex | Standard strings |
-| C / C++ | `.c` `.h` `.cpp` `.hpp` | Byte-level regex | Smart quotes disabled (char literals) |
-| SQL | `.sql` | Byte-level regex | Smart quotes disabled (`"` are identifiers) |
-| Shell / Scripts | `.sh` `.bash` `.zsh` `.ps1` `.bat` | Byte-level regex | Smart quotes disabled |
-
-### 📱 Mobile
-| Platform | Language / Extension | Pipeline | Notes |
-|---|---|---|---|
-| iOS / macOS | Swift (`.swift`) | Byte-level regex | Raw strings `#"..."#` and interpolation respected |
-| Android | Kotlin (`.kt` `.kts`) | StringRegex | Triple-quoted strings included |
-| Android (legacy) | Java (`.java`) | StringRegex | Same |
-| Flutter | Dart (`.dart`) | StringRegex | Single, double, and triple-quoted strings |
-| React Native | JS / TS / JSX / TSX | AST (Babel) | Same pipeline as web |
-
-### 📄 Data & Configuration
+### 📄 Data & Configuration (Data Pipelines)
 | Format | Extensions | Pipeline | Notes |
 |---|---|---|---|
-| JSON | `.json` `.jsonc` | Byte-level regex | Smart quotes **disabled** (`'` is invalid JSON) |
-| YAML | `.yaml` `.yml` | Global | Safe |
-| TOML | `.toml` | Global | Safe |
-| XML / Plist / XIB | `.xml` `.plist` `.xib` | StringRegex | Attribute values only |
-| Environment vars | `.env` | Global | Safe |
-| Markdown | `.md` `.mdx` `.rst` | Global | Safe |
-| Plain text | `.txt` `.csv` `.log` | Global | Safe |
+| **Exported DBs** | `.csv` `.tsv` | Global | **Specialized**: Flawless purge for CSVs exported from Excel |
+| JSON | `.json` `.jsonc` | Byte-level regex | Smart quotes **disabled** |
+| YAML / TOML | `.yaml` `.yml` `.toml` | Global | Safe |
+| Text / Markdown | `.txt` `.md` | Global | Raw plain text operations |
+
+*(See full language coverage tables in the Spanish README or the Manifesto).*
 
 ---
 
 ## Minification Detection
 
 The engine evaluates 4 heuristic signals per file. If ≥ 2 activate, the file is classified as **minified** and `smartQuotes` + `eradicator` rules are automatically blocked:
-
-- Filename contains `.min.` (e.g., `jquery.min.js`)
+- Filename contains `.min.`
 - File has ≤ 3 lines with > 500 total characters
 - Longest line exceeds 500 characters
 - Line-break ratio < 0.2% of total bytes
-
-Minified files only receive **byte-level** operations (Mojibake + Zero-Width). Code semantics remain intact.
 
 ---
 
 ## Usage
 
 ### 1. Interactive Panel
-Standard execution. Deploys the main interface:
 ```bash
 aumic-sanitize
 ```
 
-### 2. Explicit Targeting
-Direct execution on specific paths (bypasses the interactive menu):
-```bash
-aumic-sanitize scan src/components/
-aumic-sanitize scan src/index.ts
-```
-
-### 3. Delta Scan (Git Integration)
-Audits exclusively staged files. Optimized for pre-commit hook use:
-```bash
-aumic-sanitize scan --delta
-```
-
-### 4. Git Hook (Sentinel Mode)
-Anchors the engine to the local repository lifecycle. Blocks commits with entropy anomalies:
-```bash
-aumic-sanitize hook-install
-```
-
-### 5. Audit Only (No writes)
-Inspects without modifying any file. Useful for CI/CD pipelines:
-```bash
-aumic-sanitize scan --audit
-```
-
-### 6. Forensic Rollback
-Restores files to their previous state using the `aumic-history.json` snapshot:
+### 2. Forensic Rollback (Emergency Callback)
 ```bash
 aumic-sanitize restore
-aumic-sanitize restore src/index.ts
 ```

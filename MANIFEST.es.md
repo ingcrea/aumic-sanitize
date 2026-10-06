@@ -10,43 +10,33 @@ Registro de decisiones arquitectónicas y diseño estructural del motor de sanit
 
 ## 1. Persistencia Forense (aumic-history.json)
 - **Contexto:** Un script destructivo sin logs de estado detallados es un riesgo inaceptable en monorepos de clientes.
-- **Decisión:** Motor de instantáneas de estado. El sistema mapea la entropía estructural antes de mutar cualquier byte, permitiendo rollback exacto archivo por archivo.
+- **Decisión:** Motor de instantáneas de estado. El sistema mapea la entropía estructural antes de mutar cualquier byte, permitiendo rollback (callback forense) exacto archivo por archivo.
 
-## 2. Eficiencia de Escaneo (Delta Scan)
-- **Contexto:** Analizar un repositorio completo en cada commit paraliza las pipelines de desarrollo.
+## 2. Bloqueo Binario (Short-Circuit I/O)
+- **Contexto:** Si el motor topa con archivos `.pdf`, `.docx`, `.xlsx` o imágenes, el pipeline de fallback (`PLAIN`) corromperá el binario al inyectar bytes de reemplazo. Además, leer en RAM imágenes pesadas colapsa el heap.
+- **Decisión:** Filtro estructural en capa 0. Una lista blanca de excepciones ignora instantáneamente extensiones binarias compiladas en 0 milisegundos, abortando la lectura de disco (`fs.readFile`). Velocidad máxima y seguridad del binario garantizada.
+
+## 3. Eficiencia de Escaneo (Delta Scan)
 - **Decisión:** Modo diferencial (`--delta`) anclado al índice local de Git. El motor solo lee y procesa los archivos en staging.
 
-## 3. LanguageProfiler — Clasificador Universal de 22 Lenguajes
-- **Contexto:** Una herramienta que aplica las mismas reglas de sanitización globalmente sobre todos los archivos genera colisiones catastróficas. Un reemplazo seguro en Markdown es letal dentro de un `char` literal de Rust o dentro de un `rune` literal de Go.
-- **Decisión:** Módulo `LanguageProfiler.ts` con 22 categorías que mapea extensión + nombre de archivo a un `LanguageProfile`. Cada perfil define explícitamente: pipeline asignado, modo de smart quotes, permisos para eradicator, CRLF y NBSP.
+## 4. LanguageProfiler — Clasificador Universal de 22 Lenguajes
+- **Decisión:** Módulo `LanguageProfiler.ts` con 22 categorías. Cada perfil define explícitamente: pipeline asignado, modo de smart quotes, permisos para eradicator, CRLF y NBSP. Los archivos de datos exportados (`.csv`, `.tsv`) se procesan bajo el perfil `PLAIN` para máxima seguridad estructural.
 
-## 4. Triple Pipeline — AST / StringRegex / Global
-- **Contexto:** Los lenguajes con parsers disponibles permiten una precisión imposible con regex. Los que no, requieren estrategias intermedias. Los archivos de texto plano no tienen restricciones.
+## 5. Triple Pipeline — AST / StringRegex / Global
 - **Decisión:**
-  - **AST (Babel):** JS, TS, JSX, TSX, Astro. Opera exclusivamente sobre nodos `StringLiteral`, `TemplateLiteral.quasis` y `Comment`. Las mutaciones se aplican con `MagicString.overwrite()` preservando Source Maps.
-  - **StringRegex:** PHP, Python, Ruby, C#, Java, Kotlin, Dart, HTML, XML, Vue, Svelte. Regex ajustado a los delimitadores de strings de cada lenguaje. Nunca opera fuera de un string detectado.
-  - **Global:** CSS, YAML, TOML, Markdown, ENV. Regex sin restricciones — no hay sintaxis de lenguaje que romper.
+  - **AST (Babel):** JS, TS, JSX, TSX, Astro. Mutaciones inyectadas vía AST con `MagicString.overwrite()`.
+  - **StringRegex:** PHP, Python, C#, HTML, etc.
+  - **Global:** CSS, YAML, CSV.
 
-## 5. Desacoplamiento Vectorial y Motor Heurístico (MojibakeEngine)
-- **Contexto:** Un diccionario global de reemplazo generaba falsos positivos cruzados. Por ejemplo, limpiar entidades HTML corruptas dentro de un archivo JSON rompía cadenas legítimas que contenían `&copy;`. Además, aplicar reemplazos superpuestos destruía secuencias de doble-codificación (`DOUBLE_UTF8`).
-- **Decisión:** Se eliminó el diccionario monolítico y se inyectó un motor de inferencia (`MojibakeEngine`). El motor fragmenta la corrupción en 4 matrices (LATIN1, DOUBLE_UTF8, CP1252_PUNCTUATION, HTML_ENTITIES). Antes de reemplazar, evalúa la densidad de bytes de cada vector (Scoring) y aplica la limpieza en un orden jerárquico estricto, inyectando el vector de `HTML_ENTITIES` única y exclusivamente en perfiles `PHP` y `MARKUP`.
+## 6. Desacoplamiento Vectorial y Motor Heurístico (MojibakeEngine)
+- **Contexto:** Un diccionario global de reemplazo generaba falsos positivos cruzados. Por ejemplo, limpiar entidades HTML corruptas dentro de un archivo JSON rompía cadenas legítimas que contenían `&copy;`.
+- **Decisión:** Se inyectó un motor de inferencia (`MojibakeEngine`). El motor fragmenta la corrupción en 4 matrices (LATIN1, DOUBLE_UTF8, CP1252_PUNCTUATION, HTML_ENTITIES). Aplica limpieza jerárquica vía `Scoring`, inyectando `HTML_ENTITIES` única y exclusivamente en perfiles `PHP` y `MARKUP`.
 
-## 6. Detección de Minificación
-- **Contexto:** Aplicar `smartQuotes` o `eradicator` sobre un bundle minificado genera colisiones semánticas impredecibles y destruye el mapa de caracteres del bundle.
-- **Decisión:** Sistema heurístico de 4 señales (nombre `.min.`, ratio de líneas, longitud máxima de línea, densidad de bytes). Con ≥ 2 señales activas, el archivo solo recibe operaciones byte-level (Mojibake + Zero-Width). Eradicator y SmartQuotes quedan bloqueados por el perfil.
+## 7. Detección de Minificación
+- **Decisión:** Sistema heurístico de 4 señales (`.min.`, ratio, longitud). Con ≥ 2 activas, se bloquean Eradicator y SmartQuotes.
 
-## 7. Neutralización de Smart Quotes — El Bug que Rompió WordPress
-- **Contexto:** La regla `smartQuotes` ejecutaba `content.replace(/[‘’]/g, "'")` sobre el archivo completo sin contexto semántico. Interceptó apóstrofes curvos (`isn’t`) dentro de strings JS delimitados por comillas simples, cerrando el string prematuramente → `SyntaxError: missing ) after argument list` en 1,647 archivos.
-- **Decisión:** La regla de smart quotes simples (`‘’`) está **prohibida** en modo Global. Solo se activa cuando el motor opera dentro de un nodo AST aislado (modo `ast-only`) o dentro de un string reconocido por el regex del lenguaje (modo `string-regex`). Los lenguajes que usan `'` como delimitador de sintaxis (Go runes, Rust chars, SQL, Shell, C/C++) tienen `smartQuoteMode: disabled` de forma permanente.
-
-## 8. Prevención de Automutilación
-- **Contexto:** Al escanear su propio código fuente, el CLI detectaba y eliminaba sus propias firmas de detección de Mojibake (el detector se comía a sí mismo).
-- **Decisión:** Todos los vectores de búsqueda internos usan hexadecimales crudos y entidades HTML aisladas. El motor excluye su propio directorio `src/` por defecto cuando se ejecuta desde su propia raíz.
+## 8. Neutralización de Smart Quotes (El Bug de WordPress)
+- **Decisión:** La regla de smart quotes simples está prohibida en modo Global. Los lenguajes que usan `'` como delimitador de sintaxis (Go, Rust, SQL) tienen `smartQuoteMode: disabled` de forma permanente.
 
 ## 9. Escalabilidad Concurrente (Worker Threads)
-- **Contexto:** Node.js colapsa por inanición de I/O al procesar miles de archivos en un solo hilo.
-- **Decisión:** Worker Pool nativo (`piscina`). La carga computacional se delega a los núcleos físicos del procesador, reduciendo los tiempos de barrido al mínimo teórico posible.
-
-## 10. Fallback Automático (AST → StringRegex)
-- **Contexto:** Si Babel no puede parsear un archivo JS/TS porque el código ya estaba sintácticamente roto antes de ejecutar el motor, el proceso falla con una excepción no controlada.
-- **Decisión:** El pipeline AST envuelve el parse en un `try/catch`. En caso de fallo, redirige automáticamente al procesador `StringRegex` conservador. El motor nunca bloquea, nunca aborta.
+- **Decisión:** Worker Pool nativo (`piscina`).

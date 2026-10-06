@@ -10,7 +10,20 @@ El motor clasifica cada archivo en uno de sus **22 perfiles de lenguaje** antes 
 
 ---
 
-## Análisis Forense L7 (Matrices de Mojibake)
+## 🛡️ Ventajas Competitivas y Seguridad (Zero-Trust)
+
+A diferencia de los scripts de Regex comunes que destruyen código al procesar bases de datos masivas, AUM-IC Sanitize fue diseñado con una doctrina estricta de **cero confianza (Zero-Trust)** hacia su propio motor de reemplazo.
+
+1. **Rollback Forense (Callback de Emergencia):** 
+   El sistema **jamás** muta la entropía de un archivo sin generar antes un *snapshot*. Todo cambio queda grabado en un manifiesto local llamado `aumic-history.json`. Si la sanitización interfiere con la lógica de negocio, ejecutar `aumic-sanitize restore` invocará un callback forense que revierte el repositorio a su estado idéntico previo en milisegundos. Sin pérdida de datos, sin catástrofes.
+2. **Protección Binaria (Short-Circuit I/O):**
+   Archivos compilados (`.pdf`, `.docx`, `.xlsx`, `.zip`) y media (imágenes, audio, fuentes) están protegidos por una barrera *short-circuit*. El motor los identifica y los salta en 0 milisegundos, evitando su lectura en memoria. Esto garantiza cero corrupción en entregables binarios y tiempos de escaneo inmediatos en directorios estáticos pesados (ej. `uploads/`).
+3. **Cirugía AST (Abstract Syntax Tree):**
+   En ecosistemas críticos (JavaScript, TypeScript, React, Astro), las reparaciones se ejecutan inyectando un árbol sintáctico. El motor es incapaz de romper la estructura del código porque las mutaciones ocurren exclusivamente en los nodos de strings.
+
+---
+
+## 🔬 Análisis Forense L7 (Matrices de Mojibake)
 
 En lugar de reemplazar caracteres a ciegas, el motor clasifica la corrupción en 4 vectores matriciales y ejecuta un análisis heurístico (Scoring) para deducir el origen del daño antes de mutar los bytes:
 
@@ -27,7 +40,7 @@ Para evitar colisiones semánticas, los vectores se habilitan estrictamente seg�
 | **PHP** (`.php`, `.phtml`) | ✅ | ✅ | ✅ | ✅ |
 | **MARKUP** (`.html`, `.svg`) | ✅ | ✅ | ✅ | ✅ |
 | **AST** (JS, TS, React, Astro) | ✅ | ✅ | ✅ | ❌ |
-| **DATA** (JSON, YAML, TOML) | ✅ | ✅ | ✅ | ❌ |
+| **DATA** (JSON, YAML, CSV) | ✅ | ✅ | ✅ | ❌ |
 | **Desktop / Mobile / Scripts** | ✅ | ✅ | ✅ | ❌ |
 
 ---
@@ -46,53 +59,35 @@ Para evitar colisiones semánticas, los vectores se habilitan estrictamente seg�
 | PHP | `.php` `.phtml` | StringRegex | Heredocs y strings aislados; eradicator desactivado |
 | HTML | `.html` `.htm` `.xhtml` | StringRegex | Solo valores de atributos |
 | CSS | `.css` `.scss` `.sass` `.less` `.styl` | Global | Minificados: solo byte-level |
-| SVG | `.svg` | StringRegex | Atributos de presentación |
 
 ### 🖥️ Desktop & Backend
 | Lenguaje | Extensiones | Pipeline | Notas |
 |---|---|---|---|
 | Python | `.py` `.pyw` `.pyi` | StringRegex | Triple-quotes incluidas |
-| Ruby | `.rb` `.rake` `.erb` | StringRegex | Interpolación `#{}` respetada |
 | Go | `.go` | Regex byte-level | Smart quotes desactivadas (rune literals con `'`) |
 | Rust | `.rs` | Regex byte-level | Smart quotes desactivadas (char literals con `'`) |
 | C# / .NET | `.cs` `.csx` | StringRegex | Verbatim strings `@"..."` incluidas |
-| Java | `.java` `.groovy` | StringRegex | Strings estándar |
+| Java / Kotlin | `.java` `.kt` | StringRegex | Strings estándar y triples soportados |
 | C / C++ | `.c` `.h` `.cpp` `.hpp` | Regex byte-level | Smart quotes desactivadas (char literals) |
-| SQL | `.sql` | Regex byte-level | Smart quotes desactivadas (identificadores con `"`) |
-| Shell / Scripts | `.sh` `.bash` `.zsh` `.ps1` `.bat` | Regex byte-level | Smart quotes desactivadas |
 
-### 📱 Mobile
-| Plataforma | Lenguaje / Extensión | Pipeline | Notas |
-|---|---|---|---|
-| iOS / macOS | Swift (`.swift`) | Regex byte-level | Raw strings `#"..."#` y string interpolation respetados |
-| Android | Kotlin (`.kt` `.kts`) | StringRegex | Triple-quoted strings incluidas |
-| Android (legacy) | Java (`.java`) | StringRegex | Ídem |
-| Flutter | Dart (`.dart`) | StringRegex | Strings simples, dobles y triple-quoted |
-| React Native | JS / TS / JSX / TSX | AST (Babel) | Mismo pipeline que web |
-
-### 📄 Datos & Configuración
+### 📄 Datos & Configuración (Data Pipelines)
 | Formato | Extensiones | Pipeline | Notas |
 |---|---|---|---|
-| JSON | `.json` `.jsonc` | Regex byte-level | Smart quotes **desactivadas** (las `'` son JSON inválido) |
-| YAML | `.yaml` `.yml` | Global | Safe |
-| TOML | `.toml` | Global | Safe |
-| XML / Plist / XIB | `.xml` `.plist` `.xib` | StringRegex | Solo valores de atributos |
-| Variables de entorno | `.env` | Global | Safe |
-| Markdown | `.md` `.mdx` `.rst` | Global | Safe |
-| Texto plano | `.txt` `.csv` `.log` | Global | Safe |
+| **Bases Exportadas** | `.csv` `.tsv` | Global | **Especializado**: Purga perfecta para CSV exportados desde Excel |
+| JSON | `.json` `.jsonc` | Regex byte-level | Smart quotes **desactivadas** |
+| YAML / TOML | `.yaml` `.yml` `.toml` | Global | Safe |
+| Texto / Markdown | `.txt` `.md` | Global | Operaciones sobre texto plano bruto |
 
 ---
 
 ## Detección de Minificación
 
-El motor evalúa 4 señales heurísticas por archivo. Si se activan ≥ 2, el archivo se clasifica como **minificado** y se bloquean automáticamente las reglas `smartQuotes` y `eradicator`:
+El motor evalúa 4 señales heurísticas por archivo. Si se activan ≥ 2, el archivo se clasifica como **minificado** y se bloquean automáticamente las reglas `smartQuotes` y `eradicator` para evitar destrucción del sourcemap:
 
 - El nombre contiene `.min.` (ej: `jquery.min.js`)
 - El archivo tiene ≤ 3 líneas con > 500 caracteres de total
 - La línea más larga supera 500 caracteres
 - El ratio de saltos de línea < 0.2% del total de bytes
-
-Los archivos minificados solo reciben operaciones **byte-level** (Mojibake + Zero-Width). La semántica del código queda intacta.
 
 ---
 
@@ -108,7 +103,6 @@ aumic-sanitize
 Ejecución directa sobre rutas específicas (bypassea el menú interactivo):
 ```bash
 aumic-sanitize scan src/components/
-aumic-sanitize scan src/index.ts
 ```
 
 ### 3. Delta Scan (Integración Git)
@@ -117,19 +111,7 @@ Audita exclusivamente los archivos en staging. Optimizado para pre-commit hook:
 aumic-sanitize scan --delta
 ```
 
-### 4. Git Hook (Sentinel Mode)
-Ancla el motor al ciclo de vida del repositorio local. Bloquea commits con anomalías:
-```bash
-aumic-sanitize hook-install
-```
-
-### 5. Solo Auditoría (Sin escritura)
-Inspecciona sin modificar ningún archivo. Útil para CI/CD:
-```bash
-aumic-sanitize scan --audit
-```
-
-### 6. Rollback Forense
+### 4. Rollback Forense (Callback de Emergencia)
 Restaura archivos al estado previo usando el snapshot `aumic-history.json`:
 ```bash
 aumic-sanitize restore
