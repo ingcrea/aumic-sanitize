@@ -114,28 +114,42 @@ Para garantizar que todos los desarrolladores y pipelines de CI/CD operen bajo e
 
 Este archivo actúa como la **única fuente de verdad**. Permite excluir directorios pesados y desactivar módulos invasivos (por ejemplo, apagar `eradicator` si el proyecto requiere preservar logs en consola por diseño).
 
-## Implementación
+## 🚀 Instalación y Despliegue
 
-### 1. Panel de Gestión (CLI)
-Interfaz interactiva para administración general:
+La herramienta está distribuida en el registro global de NPM. Puede ser ejecutada "al vuelo" en entornos efímeros (Pipelines CI/CD) o instalada de forma global en estaciones de trabajo.
+
+### 1. Ejecución Al Vuelo (NPM Exec)
+No requiere instalación permanente. Es la directiva estándar para flujos de automatización (GitHub Actions, GitLab CI):
 ```bash
+# Generar el contrato de infraestructura
+npx @ingcrea/aumic-sanitizer init
+
+# Ejecutar escáner destructivo en la ruta actual
+npx @ingcrea/aumic-sanitizer scan
+
+# Escanear un directorio específico (Ej. WordPress)
+npx @ingcrea/aumic-sanitizer scan src/components/
+```
+
+### 2. Instalación Global (Estaciones de Trabajo)
+Para uso diario, habilita el acceso instantáneo al menú interactivo y a comandos directos:
+```bash
+npm install -g @ingcrea/aumic-sanitizer
+
+# Desplegar panel de gestión visual
 aumic-sanitizer
 ```
 
-### 2. Procesamiento Directo (Targeting)
-Para integración en scripts de automatización:
-```bash
-aumic-sanitizer scan src/components/
-```
-
 ### 3. Integración Pre-Commit (Delta Scan)
-Evalúa exclusivamente los archivos modificados en el índice de Git:
+Para validación en tiempo de desarrollo. Evalúa exclusivamente los archivos modificados en el índice de Git (Staging):
 ```bash
 aumic-sanitizer scan --delta
 ```
 
-### 4. Recuperación de Estado (Rollback)
-Regresa el directorio a la versión previa a la sanitización:
+### 4. Recuperación de Estado (Rollback Forense)
+En caso de fallo de integración o daño accidental, revierte los bytes al estado idéntico antes de la última transacción:
 ```bash
+npx @ingcrea/aumic-sanitizer restore
+# o si está instalado globalmente:
 aumic-sanitizer restore
 ```
