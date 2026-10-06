@@ -205,10 +205,8 @@ async function processWithStringRegex(
 
     // Resto de reglas (mojibake, zeroWidth, CRLF) son byte-level y siempre seguros
     if (rules.mojibake && profile.allowMojibake) {
-        for (const [bad, good] of Object.entries(REPLACEMENTS)) {
-            const c = modified.split(bad).length - 1;
-            if (c > 0) { modified = modified.replaceAll(bad, good); corruptions += c; }
-        }
+        const { fixed: f, count: c } = MojibakeEngine.cure(modified, profile.allowedMojibakeVectors);
+        if (c > 0) { modified = f; corruptions += c; }
     }
 
     // BOM estandar y fantasma
@@ -260,10 +258,8 @@ async function processWithRegex(
     let corruptions = 0;
 
     if (rules.mojibake && profile.allowMojibake) {
-        for (const [bad, good] of Object.entries(REPLACEMENTS)) {
-            const c = modified.split(bad).length - 1;
-            if (c > 0) { modified = modified.replaceAll(bad, good); corruptions += c; }
-        }
+        const { fixed: f, count: c } = MojibakeEngine.cure(modified, profile.allowedMojibakeVectors);
+        if (c > 0) { modified = f; corruptions += c; }
     }
 
     if (rules.emojis) {

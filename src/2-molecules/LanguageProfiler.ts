@@ -53,6 +53,7 @@ export interface LanguageProfile {
     allowZeroWidth:   boolean;         // Trojan Source + invisibles
     allowCRLF:        boolean;         // Normalizar saltos de linea
     allowNBSP:        boolean;         // Reemplazar &nbsp; por espacio normal
+    allowedMojibakeVectors: MojibakeVector[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
