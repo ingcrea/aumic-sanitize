@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 const { performance } = require('perf_hooks');
 import { Command } from 'commander';
 import pc from 'picocolors';
