@@ -10,6 +10,28 @@ El motor clasifica cada archivo en uno de sus **22 perfiles de lenguaje** antes 
 
 ---
 
+## Análisis Forense L7 (Matrices de Mojibake)
+
+En lugar de reemplazar caracteres a ciegas, el motor clasifica la corrupción en 4 vectores matriciales y ejecuta un análisis heurístico (Scoring) para deducir el origen del daño antes de mutar los bytes:
+
+1. **LATIN1**: Daño estándar (ISO-8859-1 a UTF-8).
+2. **DOUBLE_UTF8**: Corrupción de doble codificación (Ej. texto UTF-8 servido como Latin1 y re-guardado como UTF-8).
+3. **CP1252_PUNCTUATION**: Anomalías de la Capa 7 (Comillas y rayas del portapapeles de Windows).
+4. **HTML_ENTITIES**: Conversión errónea de bytes a entidades (Ej. `&Atilde;&plusmn;`).
+
+### Distribución Vectorial por Lenguaje
+Para evitar colisiones semánticas, los vectores se habilitan estrictamente según el perfil del lenguaje:
+
+| Perfil de Lenguaje | LATIN1 | CP1252 (Punt) | DOUBLE_UTF8 | HTML_ENTITIES |
+|---|:---:|:---:|:---:|:---:|
+| **PHP** (`.php`, `.phtml`) | ✅ | ✅ | ✅ | ✅ |
+| **MARKUP** (`.html`, `.svg`) | ✅ | ✅ | ✅ | ✅ |
+| **AST** (JS, TS, React, Astro) | ✅ | ✅ | ✅ | ❌ |
+| **DATA** (JSON, YAML, TOML) | ✅ | ✅ | ✅ | ❌ |
+| **Desktop / Mobile / Scripts** | ✅ | ✅ | ✅ | ❌ |
+
+---
+
 ## Cobertura Universal de Lenguajes
 
 ### 🌐 Web

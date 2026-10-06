@@ -27,22 +27,26 @@ Registro de decisiones arquitectónicas y diseño estructural del motor de sanit
   - **StringRegex:** PHP, Python, Ruby, C#, Java, Kotlin, Dart, HTML, XML, Vue, Svelte. Regex ajustado a los delimitadores de strings de cada lenguaje. Nunca opera fuera de un string detectado.
   - **Global:** CSS, YAML, TOML, Markdown, ENV. Regex sin restricciones — no hay sintaxis de lenguaje que romper.
 
-## 5. Detección de Minificación
+## 5. Desacoplamiento Vectorial y Motor Heurístico (MojibakeEngine)
+- **Contexto:** Un diccionario global de reemplazo generaba falsos positivos cruzados. Por ejemplo, limpiar entidades HTML corruptas dentro de un archivo JSON rompía cadenas legítimas que contenían `&copy;`. Además, aplicar reemplazos superpuestos destruía secuencias de doble-codificación (`DOUBLE_UTF8`).
+- **Decisión:** Se eliminó el diccionario monolítico y se inyectó un motor de inferencia (`MojibakeEngine`). El motor fragmenta la corrupción en 4 matrices (LATIN1, DOUBLE_UTF8, CP1252_PUNCTUATION, HTML_ENTITIES). Antes de reemplazar, evalúa la densidad de bytes de cada vector (Scoring) y aplica la limpieza en un orden jerárquico estricto, inyectando el vector de `HTML_ENTITIES` única y exclusivamente en perfiles `PHP` y `MARKUP`.
+
+## 6. Detección de Minificación
 - **Contexto:** Aplicar `smartQuotes` o `eradicator` sobre un bundle minificado genera colisiones semánticas impredecibles y destruye el mapa de caracteres del bundle.
 - **Decisión:** Sistema heurístico de 4 señales (nombre `.min.`, ratio de líneas, longitud máxima de línea, densidad de bytes). Con ≥ 2 señales activas, el archivo solo recibe operaciones byte-level (Mojibake + Zero-Width). Eradicator y SmartQuotes quedan bloqueados por el perfil.
 
-## 6. Neutralización de Smart Quotes — El Bug que Rompió WordPress
+## 7. Neutralización de Smart Quotes — El Bug que Rompió WordPress
 - **Contexto:** La regla `smartQuotes` ejecutaba `content.replace(/[‘’]/g, "'")` sobre el archivo completo sin contexto semántico. Interceptó apóstrofes curvos (`isn’t`) dentro de strings JS delimitados por comillas simples, cerrando el string prematuramente → `SyntaxError: missing ) after argument list` en 1,647 archivos.
 - **Decisión:** La regla de smart quotes simples (`‘’`) está **prohibida** en modo Global. Solo se activa cuando el motor opera dentro de un nodo AST aislado (modo `ast-only`) o dentro de un string reconocido por el regex del lenguaje (modo `string-regex`). Los lenguajes que usan `'` como delimitador de sintaxis (Go runes, Rust chars, SQL, Shell, C/C++) tienen `smartQuoteMode: disabled` de forma permanente.
 
-## 7. Prevención de Automutilación
+## 8. Prevención de Automutilación
 - **Contexto:** Al escanear su propio código fuente, el CLI detectaba y eliminaba sus propias firmas de detección de Mojibake (el detector se comía a sí mismo).
 - **Decisión:** Todos los vectores de búsqueda internos usan hexadecimales crudos y entidades HTML aisladas. El motor excluye su propio directorio `src/` por defecto cuando se ejecuta desde su propia raíz.
 
-## 8. Escalabilidad Concurrente (Worker Threads)
+## 9. Escalabilidad Concurrente (Worker Threads)
 - **Contexto:** Node.js colapsa por inanición de I/O al procesar miles de archivos en un solo hilo.
 - **Decisión:** Worker Pool nativo (`piscina`). La carga computacional se delega a los núcleos físicos del procesador, reduciendo los tiempos de barrido al mínimo teórico posible.
 
-## 9. Fallback Automático (AST → StringRegex)
+## 10. Fallback Automático (AST → StringRegex)
 - **Contexto:** Si Babel no puede parsear un archivo JS/TS porque el código ya estaba sintácticamente roto antes de ejecutar el motor, el proceso falla con una excepción no controlada.
 - **Decisión:** El pipeline AST envuelve el parse en un `try/catch`. En caso de fallo, redirige automáticamente al procesador `StringRegex` conservador. El motor nunca bloquea, nunca aborta.

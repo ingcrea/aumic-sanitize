@@ -10,6 +10,28 @@ The engine classifies each file into one of its **22 language profiles** before 
 
 ---
 
+## L7 Forensic Inference (Mojibake Matrices)
+
+Instead of replacing characters blindly, the engine classifies corruption into 4 matrix vectors and executes heuristic scoring to deduce the origin of the damage before mutating bytes:
+
+1. **LATIN1**: Standard damage (ISO-8859-1 to UTF-8).
+2. **DOUBLE_UTF8**: Double encoding corruption (e.g., UTF-8 text served as Latin1 and re-saved as UTF-8).
+3. **CP1252_PUNCTUATION**: Layer 7 anomalies (Windows clipboard quotes and dashes).
+4. **HTML_ENTITIES**: Erroneous conversion from bytes to entities (e.g., `&Atilde;&plusmn;`).
+
+### Vector Distribution by Language
+To avoid semantic collisions, vectors are strictly enabled according to the language profile:
+
+| Language Profile | LATIN1 | CP1252 (Punct) | DOUBLE_UTF8 | HTML_ENTITIES |
+|---|:---:|:---:|:---:|:---:|
+| **PHP** (`.php`, `.phtml`) | ✅ | ✅ | ✅ | ✅ |
+| **MARKUP** (`.html`, `.svg`) | ✅ | ✅ | ✅ | ✅ |
+| **AST** (JS, TS, React, Astro) | ✅ | ✅ | ✅ | ❌ |
+| **DATA** (JSON, YAML, TOML) | ✅ | ✅ | ✅ | ❌ |
+| **Desktop / Mobile / Scripts** | ✅ | ✅ | ✅ | ❌ |
+
+---
+
 ## Universal Language Coverage
 
 ### 🌐 Web
