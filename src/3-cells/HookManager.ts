@@ -4,13 +4,13 @@ import os from 'os';
 import pc from 'picocolors';
 import { execSync } from 'child_process';
 
-const HOOK_SCRIPT_LOCAL = '#!/usr/bin/env bash\n# AUM-IC Self-Healing Hook\n\naumic-sanitize scan --from-hook --delta\nexit $?\n';
+const HOOK_SCRIPT_LOCAL = '#!/usr/bin/env bash\n# AUM-IC Self-Healing Hook\n\naumic-sanitizer scan --from-hook --delta\nexit $?\n';
 
 // Hook Global Inteligente (Corre AUM-IC y luego encadena con Husky/Lefthook si existen)
 const HOOK_SCRIPT_GLOBAL = `#!/usr/bin/env bash
 # AUM-IC Sentinel (Global)
 
-aumic-sanitize scan --from-hook --delta
+aumic-sanitizer scan --from-hook --delta
 AUM_EXIT=$?
 if [ $AUM_EXIT -ne 0 ]; then
   exit $AUM_EXIT

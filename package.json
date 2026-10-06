@@ -1,10 +1,10 @@
 {
-  "name": "@ingcrea/aumic-sanitize",
+  "name": "@ingcrea/aumic-sanitizer",
   "version": "5.4.2",
   "description": "Motor Forense Anti-Mojibake de Alto Rendimiento",
   "main": "dist/index.js",
   "bin": {
-    "aumic-sanitize": "dist/index.js"
+    "aumic-sanitizer": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

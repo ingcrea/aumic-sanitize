@@ -37,7 +37,7 @@ async function interactiveMenu(program: Command) {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     const ask = (query: string): Promise<string> => new Promise(resolve => rl.question(query, resolve));
 
-    console.log(pc.cyan(`\n=== AUM-IC Sanitize v${PKG_VERSION} - Central Forense ===`));
+    console.log(pc.cyan(`\n=== AUM-IC Sanitizer v${PKG_VERSION} - Central Forense ===`));
     console.log(pc.gray('Creado por Ingeniería Creativa bajo el Estándar AUM-IC 7:2026\n'));
     console.log('1) ' + pc.yellow('Auditoría') + ' (Simulación Dry-Run sin editar archivos)');
     console.log('2) ' + pc.green('Sanear Proyecto') + ' (Escáner y Destrucción de Entropía)');
@@ -54,7 +54,7 @@ async function interactiveMenu(program: Command) {
     if (['1', '2', '3'].includes(choice)) {
         const target = await ask(pc.gray('\nDestino (Ruta de archivo/carpeta o ENTER para todo el proyecto): '));
         rl.close();
-        const args = ['node', 'aumic-sanitize'];
+        const args = ['node', 'aumic-sanitizer'];
         if (choice === '1') args.push('audit');
         if (choice === '2') args.push('scan');
         if (choice === '3') args.push('restore');
@@ -63,9 +63,9 @@ async function interactiveMenu(program: Command) {
     } else {
         rl.close();
         switch (choice) {
-            case '4': await program.parseAsync(['node', 'aumic-sanitize', 'hook']); break;
-            case '5': await program.parseAsync(['node', 'aumic-sanitize', 'hook', '--global']); break;
-            case '6': await program.parseAsync(['node', 'aumic-sanitize', 'init']); break;
+            case '4': await program.parseAsync(['node', 'aumic-sanitizer', 'hook']); break;
+            case '5': await program.parseAsync(['node', 'aumic-sanitizer', 'hook', '--global']); break;
+            case '6': await program.parseAsync(['node', 'aumic-sanitizer', 'init']); break;
             case '7': program.outputHelp(); break;
             case '0': process.exit(0);
             default: console.log(pc.red('Opción inválida.')); process.exit(1);
@@ -75,7 +75,7 @@ async function interactiveMenu(program: Command) {
 
 export async function runCLI() {
     const program = new Command();
-    program.name('aumic-sanitize').description('Motor Forense Anti-Mojibake y Erradicador de Entropía').version(PKG_VERSION);
+    program.name('aumic-sanitizer').description('Motor Forense Anti-Mojibake y Erradicador de Entropía').version(PKG_VERSION);
 
     program.command('init')
         .description('Genera aumic.config.json para establecer reglas de gobernanza (exclusiones y configuracion de modulos)')
@@ -121,7 +121,7 @@ export async function runCLI() {
     program.command('audit [target]')
         .description('Simula el escáner (Dry-Run) sin modificar archivos')
         .action(async (target) => {
-            const args = ['node', 'aumic-sanitize', 'scan'];
+            const args = ['node', 'aumic-sanitizer', 'scan'];
             if (target) args.push(target);
             args.push('--audit');
             await program.parseAsync(args);

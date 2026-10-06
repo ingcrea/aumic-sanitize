@@ -1,10 +1,10 @@
-# AUM-IC Sanitize (Estandarización y Validación de Repositorios)
+# AUM-IC Sanitizer (Estandarización y Validación de Repositorios)
 
 🌐 Navegación: 🇺🇸 [Read in English](README.md) | 📜 [Manifiesto](MANIFEST.es.md)
 
 ![Standard AUM-IC 7:2026](https://img.shields.io/badge/Standard-AUM--IC_7%3A2026-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5) ![License AGPL/Comercial](https://img.shields.io/badge/License-AGPL%2FComercial-orange) ![built by Ingeniería Creativa](https://img.shields.io/badge/built_by-Ingenier%C3%ADa_Creativa-yellow) ![0 CVE Vulnerabilities](https://img.shields.io/badge/Vulnerabilities-0_CVE-success)
 
-**AUM-IC Sanitize** es la herramienta corporativa de **Ingeniería Creativa** para el control de calidad en código fuente. Opera como un CLI y Git Hook especializado en estandarización de codificación (resolución de Mojibake), normalización de saltos de línea (CRLF/LF) y mitigación de inyecciones de código (Trojan Source).
+**AUM-IC Sanitizer** es la herramienta corporativa de **Ingeniería Creativa** para el control de calidad en código fuente. Opera como un CLI y Git Hook especializado en estandarización de codificación (resolución de Mojibake), normalización de saltos de línea (CRLF/LF) y mitigación de inyecciones de código (Trojan Source).
 
 Diseñado para integrarse en pipelines CI/CD y despliegues de alto nivel, el sistema evalúa dinámicamente **22 perfiles de lenguaje** para aplicar correcciones con precisión sintáctica, respetando siempre las convenciones estructurales de cada tecnología.
 
@@ -12,9 +12,9 @@ Diseñado para integrarse en pipelines CI/CD y despliegues de alto nivel, el sis
 
 ## 🛡️ Seguridad Corporativa y Arquitectura Zero-Trust
 
-En entornos de producción, la modificación de código mediante heurísticas globales es un riesgo inaceptable. AUM-IC Sanitize implementa un modelo **Zero-Trust**:
+En entornos de producción, la modificación de código mediante heurísticas globales es un riesgo inaceptable. AUM-IC Sanitizer implementa un modelo **Zero-Trust**:
 
-1. **Mecanismo de Rollback:** Antes de ejecutar cualquier escritura en disco, el sistema registra el estado previo en `aumic-history.json`. En caso de presentarse un conflicto de integración, el comando `aumic-sanitize restore` revierte el repositorio a su estado original, asegurando la integridad de los datos.
+1. **Mecanismo de Rollback:** Antes de ejecutar cualquier escritura en disco, el sistema registra el estado previo en `aumic-history.json`. En caso de presentarse un conflicto de integración, el comando `aumic-sanitizer restore` revierte el repositorio a su estado original, asegurando la integridad de los datos.
 2. **Validación Binaria (Short-Circuit):** El motor descarta automáticamente la lectura de binarios compilados y archivos multimedia (`.pdf`, `.docx`, `.xlsx`, `.zip`, `.png`, etc.) en tiempo de indexación, optimizando el rendimiento y eliminando el riesgo de corromper assets.
 3. **Resolución AST (Abstract Syntax Tree):** Para lenguajes críticos (JavaScript, TypeScript, React), la corrección de formato no se basa en expresiones regulares convencionales. Utiliza análisis de árbol sintáctico para limitar los reemplazos exclusivamente a literales y comentarios, protegiendo la lógica del software.
 4. **Dependencias Auditadas:** El CLI opera con **0 vulnerabilidades (0 CVE)** en su árbol de dependencias, garantizando su fiabilidad en infraestructuras corporativas.
@@ -91,7 +91,7 @@ El sistema evalúa 4 métricas técnicas por archivo. Si dos o más umbrales coi
 
 ## ⚙️ Gobernanza y Configuración (Configuration as Code)
 
-Para garantizar que todos los desarrolladores y pipelines de CI/CD operen bajo el mismo estándar, la herramienta permite declarar un contrato de infraestructura. Ejecutar `aumic-sanitize init` genera el archivo `aumic.config.json` en la raíz del proyecto:
+Para garantizar que todos los desarrolladores y pipelines de CI/CD operen bajo el mismo estándar, la herramienta permite declarar un contrato de infraestructura. Ejecutar `aumic-sanitizer init` genera el archivo `aumic.config.json` en la raíz del proyecto:
 
 ```json
 {
@@ -119,23 +119,23 @@ Este archivo actúa como la **única fuente de verdad**. Permite excluir directo
 ### 1. Panel de Gestión (CLI)
 Interfaz interactiva para administración general:
 ```bash
-aumic-sanitize
+aumic-sanitizer
 ```
 
 ### 2. Procesamiento Directo (Targeting)
 Para integración en scripts de automatización:
 ```bash
-aumic-sanitize scan src/components/
+aumic-sanitizer scan src/components/
 ```
 
 ### 3. Integración Pre-Commit (Delta Scan)
 Evalúa exclusivamente los archivos modificados en el índice de Git:
 ```bash
-aumic-sanitize scan --delta
+aumic-sanitizer scan --delta
 ```
 
 ### 4. Recuperación de Estado (Rollback)
 Regresa el directorio a la versión previa a la sanitización:
 ```bash
-aumic-sanitize restore
+aumic-sanitizer restore
 ```
