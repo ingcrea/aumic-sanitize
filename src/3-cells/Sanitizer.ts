@@ -9,7 +9,7 @@ import MagicString from 'magic-string';
 import { EMOJI_PATTERN, reverseEmojiMojibake } from '../1-atoms/constants';
 import { MojibakeEngine } from '../2-molecules/MojibakeEngine';
 import type { SanitizeOptions, FileSanitizeResult } from '../1-atoms/types';
-import { detectProfile } from '../2-molecules/LanguageProfiler';
+import { detectProfile, isBinaryOrIgnored } from '../2-molecules/LanguageProfiler';
 import type { LanguageProfile, SmartQuoteMode } from '../2-molecules/LanguageProfiler';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -315,6 +315,10 @@ async function processWithRegex(
 // Clasifica el archivo con LanguageProfiler y enruta al procesador correcto.
 // ─────────────────────────────────────────────────────────────────────────────
 export async function processFile(filepath: string, options: SanitizeOptions): Promise<FileSanitizeResult> {
+    if (isBinaryOrIgnored(filepath)) {
+        return { filepath, corruptions: 0, modified: false };
+    }
+
     try {
         const content = await fsP.readFile(filepath, 'utf8');
         const rules   = options.config.rules;

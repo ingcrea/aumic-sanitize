@@ -371,3 +371,27 @@ export function detectProfile(filepath: string, content: string): LanguageProfil
 
     return buildProfile(category, isMinified);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LISTA NEGRA DE BINARIOS Y DOCUMENTOS COMPILADOS
+// El motor ignorará estos archivos instantáneamente antes de la lectura en disco.
+// ─────────────────────────────────────────────────────────────────────────────
+const BINARY_EXTENSIONS = new Set([
+    // Documentos compilados
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+    // Imágenes (Nota: .svg se ignora aquí porque ES texto y ya está en MARKUP)
+    '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.tiff',
+    // Fuentes
+    '.ttf', '.woff', '.woff2', '.eot', '.otf',
+    // Comprimidos
+    '.zip', '.tar', '.gz', '.7z', '.rar',
+    // Binarios y ejecutables
+    '.exe', '.dll', '.so', '.dylib', '.bin', '.dat',
+    // Audio / Video
+    '.mp3', '.mp4', '.avi', '.mov', '.mkv', '.wav'
+]);
+
+export function isBinaryOrIgnored(filepath: string): boolean {
+    const ext = path.extname(filepath).toLowerCase();
+    return BINARY_EXTENSIONS.has(ext);
+}
