@@ -1,39 +1,37 @@
-# AUM-IC Sanitize (Motor Forense Anti-Entropía)
+# AUM-IC Sanitize (Estandarización y Validación de Repositorios)
 
 🌐 Navegación: 🇺🇸 [Read in English](README.md) | 📜 [Manifiesto](MANIFEST.es.md) | 📖 [Bitácora](BITACORA.md)
 
 ![Standard AUM-IC 7:2026](https://img.shields.io/badge/Standard-AUM--IC_7%3A2026-blue) ![nature Clean Architecture Standard](https://img.shields.io/badge/nature-Clean_Architecture_Standard-00bfa5) ![License AGPL/Comercial](https://img.shields.io/badge/License-AGPL%2FComercial-orange) ![built by Ingeniería Creativa](https://img.shields.io/badge/built_by-Ingenier%C3%ADa_Creativa-yellow) ![0 CVE Vulnerabilities](https://img.shields.io/badge/Vulnerabilities-0_CVE-success)
 
-**AUM-IC Sanitize** es un CLI nativo y Git Hook de validación forense. No es un linter. Es un motor de rastreo a nivel de byte que purga corrupción UTF-8 (Mojibake), secuencias de salto de línea mixtas, inyecciones de Trojan Source y rastros de depuración muertos antes de que toquen producción.
+**AUM-IC Sanitize** es la herramienta corporativa de **Ingeniería Creativa** para el control de calidad en código fuente. Opera como un CLI y Git Hook especializado en estandarización de codificación (resolución de Mojibake), normalización de saltos de línea (CRLF/LF) y mitigación de inyecciones de código (Trojan Source).
 
-El motor clasifica cada archivo en uno de sus **22 perfiles de lenguaje** antes de procesarlo, adaptando las reglas a la sintaxis exacta de cada tecnología. Un archivo PHP, un componente Swift y un bundle CSS minificado reciben tratamientos radicalmente distintos.
-
----
-
-## 🛡️ Ventajas Competitivas y Seguridad (Zero-Trust)
-
-A diferencia de los scripts de Regex comunes que destruyen código al procesar bases de datos masivas, AUM-IC Sanitize fue diseñado con una doctrina estricta de **cero confianza (Zero-Trust)** hacia su propio motor de reemplazo.
-
-1. **Rollback Forense (Callback de Emergencia):** 
-   El sistema **jamás** muta la entropía de un archivo sin generar antes un *snapshot*. Todo cambio queda grabado en un manifiesto local llamado `aumic-history.json`. Si la sanitización interfiere con la lógica de negocio, ejecutar `aumic-sanitize restore` invocará un callback forense que revierte el repositorio a su estado idéntico previo en milisegundos. Sin pérdida de datos, sin catástrofes.
-2. **Protección Binaria (Short-Circuit I/O):**
-   Archivos compilados (`.pdf`, `.docx`, `.xlsx`, `.zip`) y media (imágenes, audio, fuentes) están protegidos por una barrera *short-circuit*. El motor los identifica y los salta en 0 milisegundos, evitando su lectura en memoria. Esto garantiza cero corrupción en entregables binarios y tiempos de escaneo inmediatos en directorios estáticos pesados (ej. `uploads/`).
-3. **Cirugía AST (Abstract Syntax Tree):**
-   En ecosistemas críticos (JavaScript, TypeScript, React, Astro), las reparaciones se ejecutan inyectando un árbol sintáctico. El motor es incapaz de romper la estructura del código porque las mutaciones ocurren exclusivamente en los nodos de strings.
+Diseñado para integrarse en pipelines CI/CD y despliegues de alto nivel, el sistema evalúa dinámicamente **22 perfiles de lenguaje** para aplicar correcciones con precisión sintáctica, respetando siempre las convenciones estructurales de cada tecnología.
 
 ---
 
-## 🔬 Análisis Forense L7 (Matrices de Mojibake)
+## 🛡️ Seguridad Corporativa y Arquitectura Zero-Trust
 
-En lugar de reemplazar caracteres a ciegas, el motor clasifica la corrupción en 4 vectores matriciales y ejecuta un análisis heurístico (Scoring) para deducir el origen del daño antes de mutar los bytes:
+En entornos de producción, la modificación de código mediante heurísticas globales es un riesgo inaceptable. AUM-IC Sanitize implementa un modelo **Zero-Trust**:
 
-1. **LATIN1**: Daño estándar (ISO-8859-1 a UTF-8).
-2. **DOUBLE_UTF8**: Corrupción de doble codificación (Ej. texto UTF-8 servido como Latin1 y re-guardado como UTF-8).
-3. **CP1252_PUNCTUATION**: Anomalías de la Capa 7 (Comillas y rayas del portapapeles de Windows).
-4. **HTML_ENTITIES**: Conversión errónea de bytes a entidades (Ej. `&Atilde;&plusmn;`).
+1. **Mecanismo de Rollback:** Antes de ejecutar cualquier escritura en disco, el sistema registra el estado previo en `aumic-history.json`. En caso de presentarse un conflicto de integración, el comando `aumic-sanitize restore` revierte el repositorio a su estado original, asegurando la integridad de los datos.
+2. **Validación Binaria (Short-Circuit):** El motor descarta automáticamente la lectura de binarios compilados y archivos multimedia (`.pdf`, `.docx`, `.xlsx`, `.zip`, `.png`, etc.) en tiempo de indexación, optimizando el rendimiento y eliminando el riesgo de corromper assets.
+3. **Resolución AST (Abstract Syntax Tree):** Para lenguajes críticos (JavaScript, TypeScript, React), la corrección de formato no se basa en expresiones regulares convencionales. Utiliza análisis de árbol sintáctico para limitar los reemplazos exclusivamente a literales y comentarios, protegiendo la lógica del software.
+4. **Dependencias Auditadas:** El CLI opera con **0 vulnerabilidades (0 CVE)** en su árbol de dependencias, garantizando su fiabilidad en infraestructuras corporativas.
 
-### Distribución Vectorial por Lenguaje
-Para evitar colisiones semánticas, los vectores se habilitan estrictamente según el perfil del lenguaje:
+---
+
+## 🔬 Matrices de Corrección de Codificación (Mojibake)
+
+La herramienta clasifica las anomalías de codificación en 4 vectores estructurales para aplicar correcciones focalizadas:
+
+1. **LATIN1**: Discrepancias estándar de ISO-8859-1 a UTF-8.
+2. **DOUBLE_UTF8**: Anomalías generadas por procesos de doble codificación.
+3. **CP1252_PUNCTUATION**: Caracteres tipográficos originados por herramientas ofimáticas (portapapeles de Windows).
+4. **HTML_ENTITIES**: Conversiones directas de codificación a entidades.
+
+### Distribución Vectorial por Perfil
+Para prevenir falsos positivos, la habilitación de los vectores depende del perfil del lenguaje:
 
 | Perfil de Lenguaje | LATIN1 | CP1252 (Punt) | DOUBLE_UTF8 | HTML_ENTITIES |
 |---|:---:|:---:|:---:|:---:|
@@ -45,75 +43,71 @@ Para evitar colisiones semánticas, los vectores se habilitan estrictamente seg�
 
 ---
 
-## Cobertura Universal de Lenguajes
+## Cobertura Estructural de Lenguajes
 
 ### 🌐 Web
-| Lenguaje / Framework | Extensiones | Pipeline | Notas |
-|---|---|---|---|
-| JavaScript | `.js` `.mjs` `.cjs` | AST (Babel) | Smart quotes solo dentro de strings/comentarios |
-| TypeScript | `.ts` | AST (Babel + TS) | Ídem |
-| React / JSX | `.jsx` `.tsx` | AST (Babel + JSX) | Ídem |
-| Astro | `.astro` | AST (Babel + TS) | Frontmatter y scripts tratados como TS |
-| Vue | `.vue` | StringRegex | Bloques script + template |
-| Svelte | `.svelte` | StringRegex | Bloques script + template |
-| PHP | `.php` `.phtml` | StringRegex | Heredocs y strings aislados; eradicator desactivado |
-| HTML | `.html` `.htm` `.xhtml` | StringRegex | Solo valores de atributos |
-| CSS | `.css` `.scss` `.sass` `.less` `.styl` | Global | Minificados: solo byte-level |
+| Lenguaje / Framework | Pipeline | Observaciones |
+|---|---|---|
+| JavaScript / TypeScript / React | AST (Babel) | Corrección habilitada únicamente dentro de strings y comentarios. |
+| Astro | AST (Babel + TS) | Los metadatos (Frontmatter) se procesan como TypeScript. |
+| Vue / Svelte | StringRegex | Análisis limitado a bloques de script y template. |
+| PHP | StringRegex | Manejo específico para literales y sintaxis heredoc. |
+| HTML | StringRegex | Resolución limitada a valores de atributos. |
+| CSS | Global | Los archivos minificados reciben procesamiento restringido. |
 
-### 🖥️ Desktop & Backend
-| Lenguaje | Extensiones | Pipeline | Notas |
-|---|---|---|---|
-| Python | `.py` `.pyw` `.pyi` | StringRegex | Triple-quotes incluidas |
-| Go | `.go` | Regex byte-level | Smart quotes desactivadas (rune literals con `'`) |
-| Rust | `.rs` | Regex byte-level | Smart quotes desactivadas (char literals con `'`) |
-| C# / .NET | `.cs` `.csx` | StringRegex | Verbatim strings `@"..."` incluidas |
-| Java / Kotlin | `.java` `.kt` | StringRegex | Strings estándar y triples soportados |
-| C / C++ | `.c` `.h` `.cpp` `.hpp` | Regex byte-level | Smart quotes desactivadas (char literals) |
+### 🖥️ Desktop, Backend & Mobile
+| Lenguaje | Pipeline | Observaciones |
+|---|---|---|
+| Python / Ruby | StringRegex | Soporte integral para literales multilínea y de interpolación. |
+| Go / Rust / C / C++ | Regex byte-level | Reglas de comillas tipográficas (Smart Quotes) inhabilitadas por sintaxis del lenguaje. |
+| C# / Java / Kotlin / Dart | StringRegex | Soporte para literales estándar y verbatim. |
+| Swift | Regex byte-level | Tratamiento específico para raw strings e interpolaciones. |
+| Shell / Scripts | Regex byte-level | Smart quotes inhabilitadas. |
+| SQL | Regex byte-level | Identificadores estructurales preservados. |
 
-### 📄 Datos & Configuración (Data Pipelines)
-| Formato | Extensiones | Pipeline | Notas |
-|---|---|---|---|
-| **Bases Exportadas** | `.csv` `.tsv` | Global | **Especializado**: Purga perfecta para CSV exportados desde Excel |
-| JSON | `.json` `.jsonc` | Regex byte-level | Smart quotes **desactivadas** |
-| YAML / TOML | `.yaml` `.yml` `.toml` | Global | Safe |
-| Texto / Markdown | `.txt` `.md` | Global | Operaciones sobre texto plano bruto |
+### 📄 Infraestructura y Datos (Data Pipelines)
+| Formato | Pipeline | Observaciones |
+|---|---|---|
+| **Bases de Datos** (`.csv`, `.tsv`) | Global | Perfil optimizado para la resolución de bases exportadas desde ofimática. |
+| JSON (`.json`) | Regex byte-level | Smart quotes inhabilitadas. |
+| YAML / TOML | Global | Operaciones seguras sobre formato declarativo. |
+| XML / Plist | StringRegex | Limitado a propiedades y valores. |
 
 ---
 
-## Detección de Minificación
+## Análisis de Minificación
 
-El motor evalúa 4 señales heurísticas por archivo. Si se activan ≥ 2, el archivo se clasifica como **minificado** y se bloquean automáticamente las reglas `smartQuotes` y `eradicator` para evitar destrucción del sourcemap:
+El sistema evalúa 4 métricas técnicas por archivo. Si dos o más umbrales coinciden, el archivo se cataloga como **minificado**, inhabilitando automáticamente las reglas invasivas (`smartQuotes` y limpieza de comentarios) para preservar el sourcemap original:
 
-- El nombre contiene `.min.` (ej: `jquery.min.js`)
-- El archivo tiene ≤ 3 líneas con > 500 caracteres de total
-- La línea más larga supera 500 caracteres
-- El ratio de saltos de línea < 0.2% del total de bytes
+- El nombre del archivo incluye `.min.`
+- Total de líneas ≤ 3 con peso superior a 500 caracteres
+- Longitud máxima de una línea > 500 caracteres
+- Ratio de saltos de línea inferior al 0.2% del volumen total
 
 ---
 
-## Uso y Ejecución
+## Implementación
 
-### 1. Panel Interactivo
-Ejecución estándar. Despliega la interfaz principal:
+### 1. Panel de Gestión (CLI)
+Interfaz interactiva para administración general:
 ```bash
 aumic-sanitize
 ```
 
-### 2. Targeting Explícito
-Ejecución directa sobre rutas específicas (bypassea el menú interactivo):
+### 2. Procesamiento Directo (Targeting)
+Para integración en scripts de automatización:
 ```bash
 aumic-sanitize scan src/components/
 ```
 
-### 3. Delta Scan (Integración Git)
-Audita exclusivamente los archivos en staging. Optimizado para pre-commit hook:
+### 3. Integración Pre-Commit (Delta Scan)
+Evalúa exclusivamente los archivos modificados en el índice de Git:
 ```bash
 aumic-sanitize scan --delta
 ```
 
-### 4. Rollback Forense (Callback de Emergencia)
-Restaura archivos al estado previo usando el snapshot `aumic-history.json`:
+### 4. Recuperación de Estado (Rollback)
+Regresa el directorio a la versión previa a la sanitización:
 ```bash
 aumic-sanitize restore
-aumic-sanitize restore src/index.ts
 ```
