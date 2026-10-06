@@ -153,3 +153,12 @@ npx @ingcrea/aumic-sanitizer restore
 # o si está instalado globalmente:
 aumic-sanitizer restore
 ```
+
+---
+
+## 🏢 Soporte Corporativo
+
+AUM-IC Sanitizer es mantenido por el equipo de ingeniería de **[Ingeniería Creativa](https://ingcrea.com)**.
+
+Para implementaciones empresariales, auditorías de seguridad personalizadas o soporte técnico avanzado:
+📧 **Contacto Directo:** [contacto@ingcrea.com](mailto:contacto@ingcrea.com)
